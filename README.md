@@ -6,7 +6,7 @@
 
 ## 设计原则
 
-1. **数据有出处**：学时、难度、先修要求来自 csdiy.wiki 和 OSSU 的原文，页面里逐项标明出处。没有出处的课程，写"无数据"，不估算。
+1. **数据有出处**：学时、难度、先修要求来自 csdiy.wiki 和 OSSU 的原文，页面里逐项标明出处。没有出处的课程，写"无数据"。
 2. **中文优先**：每门核心课优先给出中文授课的课程作为主力，国际名课作为进阶或对照，并注明有无中文翻译、字幕。
 3. **过关看产出**：每个主题的「过关标准」以课程官方作业为准，少量"自检"题由编者补充并明确标注。
 4. **只收核实过的链接**：每页末尾写明核实日期与核实方式。
@@ -47,6 +47,7 @@
 
 ## 来源与许可
 
+- 本仓库中编者撰写的部分采用 [MIT 许可证](LICENSE)。
 - 课程数据来自 OSSU（MIT 许可证，Copyright (c) 2015-2023 Open Source Society University）与 csdiy.wiki（源仓库 [PKUFlyingPig/cs-self-learning](https://github.com/PKUFlyingPig/cs-self-learning)，MIT 许可证，Copyright © 2021 Yinmin Zhong）。
-- 各学科"为什么学"的观点与推荐取自 teachyourselfcs（其中文翻译仓库 [izackwu/TeachYourselfCS-CN](https://github.com/izackwu/TeachYourselfCS-CN) 使用 CC BY-SA 4.0）。本项目只做转述与署名，使用其内容的部分应保持相同协议。
+- 各学科"为什么学"的观点与推荐转述自 teachyourselfcs（其中文翻译仓库 [izackwu/TeachYourselfCS-CN](https://github.com/izackwu/TeachYourselfCS-CN) 使用 CC BY-SA 4.0）；转述部分署名并遵循该协议。
 - 引用的每一门课程，其课程材料的版权与使用条款归各自的高校或作者所有。
