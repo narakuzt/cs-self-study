@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """校验知识层题库里代码题的答案。
 
-每道题是一个 "### Q…" 小节。小节里第一个 ```python 或 ```bash 代码块会被运行
-（bash 块在一个全新的空临时目录里运行，语言环境固定为 C），
+每道题是一个 "### Q…" 小节。小节里第一个 ```python、```bash、```c 或 ```cpp 代码块会被运行：
+  - python：直接运行
+  - bash：在一个全新的空临时目录里运行，语言环境固定为 C；Git 的全局配置被屏蔽，
+    提交者信息固定为测试用户，因此 Git 命令的输出不受你本机配置影响
+  - c / cpp：用 gcc -std=c11 / g++ -std=c++17（带 -Wall -Wextra）编译后运行
 其标准输出必须与「答案」之后第一个 ```text 代码块完全一致（忽略行尾空白）。
 没有代码块的题（纯概念题）会被跳过。
 
@@ -33,7 +36,7 @@ def check_file(path):
     ok = bad = skipped = 0
     for sec in sections(text):
         title = sec.splitlines()[0]
-        code = re.search(r"```(python|bash)\n(.*?)```", sec, re.S)
+        code = re.search(r"```(python|bash|cpp|c)\n(.*?)```", sec, re.S)
         ans = re.search(r"- 答案：\s*```text\n(.*?)```", sec, re.S)
         if not code or not ans:
             skipped += 1
@@ -41,13 +44,27 @@ def check_file(path):
         lang, src = code.group(1), code.group(2)
         workdir = tempfile.mkdtemp()
         try:
+            env = {**os.environ, "LC_ALL": "C", "LANG": "C",
+                   "GIT_CONFIG_GLOBAL": "/dev/null", "GIT_CONFIG_NOSYSTEM": "1", "GIT_PAGER": "cat",
+                   "GIT_EDITOR": "true", "GIT_AUTHOR_NAME": "Test", "GIT_AUTHOR_EMAIL": "t@example.com",
+                   "GIT_COMMITTER_NAME": "Test", "GIT_COMMITTER_EMAIL": "t@example.com"}
             if lang == "python":
                 script = Path(workdir) / "q.py"
                 script.write_text(src, encoding="utf-8")
                 cmd = [sys.executable, str(script)]
-            else:
+            elif lang == "bash":
                 cmd = ["bash", "-c", src]
-            env = {**os.environ, "LC_ALL": "C", "LANG": "C"}
+            else:
+                ext, compiler, std = ("c", "gcc", "-std=c11") if lang == "c" else ("cpp", "g++", "-std=c++17")
+                source = Path(workdir) / f"q.{ext}"
+                source.write_text(src, encoding="utf-8")
+                comp = subprocess.run([compiler, std, "-Wall", "-Wextra", "-o", str(Path(workdir) / "q"),
+                                       str(source), "-lm"], capture_output=True, text=True, timeout=60)
+                if comp.returncode != 0:
+                    print(f"✗ {title}：编译失败\n{comp.stderr.strip()[:400]}")
+                    bad += 1
+                    continue
+                cmd = [str(Path(workdir) / "q")]
             r = subprocess.run(cmd, capture_output=True, text=True, timeout=30, cwd=workdir, env=env)
         except subprocess.TimeoutExpired:
             print(f"✗ {title}：运行超时")
@@ -63,8 +80,13 @@ def check_file(path):
             print(f"✗ {title}")
             print("  期望：", want.replace("\n", " ⏎ "))
             print("  实际：", got.replace("\n", " ⏎ "), r.stderr.strip()[:200])
-    bashv = subprocess.run(["bash", "--version"], capture_output=True, text=True).stdout.splitlines()[0]
-    print(f"{path}: 通过 {ok}，失败 {bad}，跳过（无代码）{skipped}，Python {sys.version.split()[0]}，{bashv}")
+    def first(cmd):
+        try:
+            return subprocess.run(cmd, capture_output=True, text=True).stdout.splitlines()[0]
+        except Exception:
+            return "未安装"
+    print(f"{path}: 通过 {ok}，失败 {bad}，跳过（无代码）{skipped}")
+    print(f"  环境：Python {sys.version.split()[0]}；{first(['bash', '--version'])}；{first(['git', '--version'])}；{first(['gcc', '--version'])}；{first(['g++', '--version'])}")
     return bad
 
 
