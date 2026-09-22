@@ -6,7 +6,7 @@
   - 中国大学 MOOC：读取页面标题，占位页视为失效
   - YouTube：用 oEmbed 获取标题
   - 带 #锚点 的链接：检查页面里是否有该 id
-  - 其他站点：HTTP 状态码为 2xx（连接失败会重试一次），并显示页面标题
+  - 其他站点：HTTP 状态码为 2xx（连接失败、限流或服务器错误会等待后重试），并显示页面标题
 
 用法：
   python3 工具/校验链接.py            # 检查整个仓库，打印全部结果
@@ -33,13 +33,15 @@ def curl(url, extra=(), timeout=30):
 
 
 def status(url):
-    """返回 HTTP 状态码；连接失败（000）时重试一次。"""
-    for _ in range(2):
+    """返回 HTTP 状态码；连接失败、限流（429）或服务器错误（5xx）时，等待后最多重试 2 次。"""
+    code = "000"
+    for attempt in range(3):
         p = subprocess.run(["curl", "-sk", "-o", "/dev/null", "-L", "-m", "30", "-A", UA,
                             "-w", "%{http_code}", url], capture_output=True)
         code = p.stdout.decode()
-        if code != "000":
+        if code not in ("000", "429") and not code.startswith("5"):
             break
+        time.sleep(3 * (attempt + 1))
     return code
 
 
