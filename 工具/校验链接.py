@@ -79,7 +79,7 @@ def check(url):
         if not c.startswith("2"):
             return "网页", "失效", f"HTTP {c}"
         html = curl(page)
-        if anchor and f'id="{anchor}"' not in html:
+        if anchor and f'id="{anchor}"' not in html and f'name="{anchor}"' not in html:
             return "网页", "失效", f"页面存在，但没有锚点 #{anchor}"
         return "网页", "正常", title(html)[:80]
     except Exception as e:

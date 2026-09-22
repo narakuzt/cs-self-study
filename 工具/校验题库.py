@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """校验知识层题库里代码题的答案。
 
-每道题是一个 "### Q…" 小节。小节里第一个 ```python、```bash、```c 或 ```cpp 代码块会被运行：
+每道题是一个 "### Q…" 小节。小节里第一个 ```python、```bash、```c、```cpp 或 ```js 代码块会被运行：
   - python：直接运行
   - bash：在一个全新的空临时目录里运行，语言环境固定为 C；Git 的全局配置被屏蔽，
     提交者信息固定为测试用户，因此 Git 命令的输出不受你本机配置影响
   - c / cpp：用 gcc -std=c11 / g++ -std=c++17（带 -Wall -Wextra）编译后运行
+  - js：用 node 运行
 其标准输出必须与「答案」之后第一个 ```text 代码块完全一致（忽略行尾空白）。
 没有代码块的题（纯概念题）会被跳过。
 
@@ -36,7 +37,7 @@ def check_file(path):
     ok = bad = skipped = 0
     for sec in sections(text):
         title = sec.splitlines()[0]
-        code = re.search(r"```(python|bash|cpp|c)\n(.*?)```", sec, re.S)
+        code = re.search(r"```(python|bash|cpp|c|js)\n(.*?)```", sec, re.S)
         ans = re.search(r"- 答案：\s*```text\n(.*?)```", sec, re.S)
         if not code or not ans:
             skipped += 1
@@ -54,6 +55,10 @@ def check_file(path):
                 cmd = [sys.executable, str(script)]
             elif lang == "bash":
                 cmd = ["bash", "-c", src]
+            elif lang == "js":
+                script = Path(workdir) / "q.js"
+                script.write_text(src, encoding="utf-8")
+                cmd = ["node", str(script)]
             else:
                 ext, compiler, std = ("c", "gcc", "-std=c11") if lang == "c" else ("cpp", "g++", "-std=c++17")
                 source = Path(workdir) / f"q.{ext}"
@@ -86,7 +91,7 @@ def check_file(path):
         except Exception:
             return "未安装"
     print(f"{path}: 通过 {ok}，失败 {bad}，跳过（无代码）{skipped}")
-    print(f"  环境：Python {sys.version.split()[0]}；{first(['bash', '--version'])}；{first(['git', '--version'])}；{first(['gcc', '--version'])}；{first(['g++', '--version'])}")
+    print(f"  环境：Python {sys.version.split()[0]}；{first(['bash', '--version'])}；{first(['git', '--version'])}；{first(['gcc', '--version'])}；{first(['g++', '--version'])}；node {first(['node', '--version'])}")
     return bad
 
 
