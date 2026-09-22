@@ -23,7 +23,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from urllib.parse import quote, urlparse
 
-UA = "Mozilla/5.0"
+UA = "Mozilla/5.0 (X11; Linux x86_64; rv:120.0) Gecko/20100101 Firefox/120.0"  # 一些站点（如 gnu.org）会拒绝过于简单的标识
 
 
 def curl(url, extra=(), timeout=30):
